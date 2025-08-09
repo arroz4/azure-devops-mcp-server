@@ -1,6 +1,25 @@
-# Azure DevOps Work Item Manager - MCP Server
+# Azure DevOps Work Item Manager - MCP Server (Modular Architecture)
 
-This is a Model Context Protocol (MCP) server that provides tools for managing Azure DevOps work items. It allows you to create, update, delete, and retrieve work items, as well as manage project settings and create hierarchical relationships between Epics and Tasks.
+This is a Model Context Protocol (MCP) server that provides tools for managing Azure DevOps work items. It features a clean, modular architecture with separation of concerns and allows you to create, update, delete, and retrieve work items, as well as manage project settings and create hierarchical relationships between Epics and Tasks.
+
+## 🏗️ Modular Architecture
+
+```
+ado_builder/
+├── core/                          # Core functionality
+│   ├── config.py                  # Configuration and authentication
+│   └── azure_client.py            # Azure DevOps REST API client
+├── services/                      # Business logic
+│   ├── formatting.py              # Text processing and HTML formatting
+│   └── work_items.py              # Work item management operations
+├── resources/                     # Documentation and standards
+│   ├── standards.py               # Quality templates and standards
+│   └── guides.py                  # User guides and workflows
+├── utils/                         # Utility functions
+│   └── helpers.py                 # Common helper functions
+├── mcp_server.py                  # Main MCP server (modular)
+└── test_modular.py                # Comprehensive test suite
+```
 
 ## ⭐ Key Features
 
@@ -12,6 +31,15 @@ This is a Model Context Protocol (MCP) server that provides tools for managing A
 - **Detailed Guidance**: Comprehensive task descriptions that provide clear implementation guidance
 - **Project Management**: Switch between projects and manage configurations
 - **Interactive Guides**: Built-in prompts for common workflows
+
+## 🎯 Modular Architecture Benefits
+
+- **Separation of Concerns**: Each module has a single, well-defined responsibility
+- **Maintainability**: Easy to update individual components without affecting others
+- **Testability**: Components can be tested in isolation with comprehensive test suite
+- **Reusability**: Modules can be imported and used independently
+- **Scalability**: Easy to add new features without disrupting existing functionality
+- **Clean Imports**: Non-circular dependencies with clear module relationships
 
 ## 🚀 Quick Start
 
