@@ -9,9 +9,14 @@ This MCP server provides tools for managing Azure DevOps work items including:
 - Creating Tasks and Epics
 - Updating work items
 - Deleting work items
-- Retrieving work item details
+- Retrieving work item details with comprehensive URL breakdowns
 - Linking Tasks to Epics
 - Project management
+
+KEY FEATURE: URL Breakdown Functionality
+- create_epic_with_tasks: Provides immediate summary table with all work item URLs after creation
+- get_work_item: Shows detailed breakdown with URLs for Epics and all their child Tasks
+- Both functions provide direct Azure DevOps URLs for instant access to work items
 
 IMPORTANT: Work item descriptions support HTML formatting as confirmed by Microsoft Azure DevOps documentation.
 The Description field has Data type=HTML and proper HTML formatting renders perfectly in Azure DevOps.
@@ -1197,7 +1202,10 @@ def delete_work_item(item_id: int) -> str:
 def get_work_item(item_id: int) -> str:
     """
     Retrieves detailed information about a work item from Azure DevOps.
-    For Epics, also shows a table of linked child work items.
+    For Epics, automatically shows a comprehensive table of all linked child work items with their URLs.
+    
+    This function is particularly useful when you need to see the complete breakdown of an Epic
+    with all its associated Tasks, including direct URLs for quick access to each work item.
     
     Uses helper functions:
     - build_workitem_url() - Constructs the Azure DevOps API URL for the work item with relations expansion
@@ -1207,7 +1215,9 @@ def get_work_item(item_id: int) -> str:
         item_id: The ID of the work item to retrieve
     
     Returns:
-        Formatted work item details if successful, error message otherwise
+        Formatted work item details if successful, error message otherwise.
+        For Epics: Includes a complete breakdown table showing all child Tasks with IDs, titles, 
+        states, assignees, and direct Azure DevOps URLs for immediate access.
     """
     try:
         # URL to get a work item with relations
@@ -1371,7 +1381,11 @@ def create_epic_with_tasks(
     tags: str = ""
 ) -> str:
     """
-    Creates an Epic with multiple Tasks and links them together, then provides a summary with URLs.
+    Creates an Epic with multiple Tasks and links them together, then provides a comprehensive summary with URLs.
+    
+    This is the RECOMMENDED workflow for creating Epics with multiple tasks in a single operation.
+    The function automatically creates all work items, establishes parent-child relationships, and provides
+    a detailed breakdown table with URLs for immediate access to all created items.
     
     Uses helper functions:
     - _create_work_item_internal() - Creates both the Epic and all Tasks
@@ -1387,7 +1401,8 @@ def create_epic_with_tasks(
         tags: Semicolon-separated tags to apply to all work items
     
     Returns:
-        Summary table with Epic and Task URLs, or error message if creation fails
+        Comprehensive summary table with Epic and Task URLs, linking status, and next steps.
+        This breakdown provides immediate access to all created work items with their direct Azure DevOps URLs.
     """
     try:
         # Create the Epic first
