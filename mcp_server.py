@@ -288,6 +288,7 @@ def set_project(new_project_name: str) -> str:
 
 
 if __name__ == "__main__":
-    # Run the MCP server
+    # Run the MCP server with streamable-http transport
     logger.info("Starting Azure DevOps MCP Server...")
-    mcp.run()
+    logger.info("Server will be available at: http://localhost:8001/mcp/")
+    mcp.run(transport="streamable-http", host="localhost", port=8001)

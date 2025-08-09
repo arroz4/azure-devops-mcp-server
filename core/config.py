@@ -17,22 +17,27 @@ class WorkItemType(Enum):
 def get_current_config():
     """
     Get current Azure DevOps configuration from environment variables.
+    Supports both old and new environment variable naming conventions.
     
     Returns:
         dict: Configuration containing organization, project, and token
     """
-    organization = os.getenv("AZURE_DEVOPS_ORGANIZATION")
+    # Try new naming convention first, then fall back to old convention
+    organization = (os.getenv("AZURE_DEVOPS_ORGANIZATION") or
+                    os.getenv("AZURE_DEVOPS_ORGANIZATION_URL", "")
+                    .replace("https://dev.azure.com/", ""))
     project = os.getenv("AZURE_DEVOPS_PROJECT")
-    token = os.getenv("AZURE_DEVOPS_TOKEN")
+    token = os.getenv("AZURE_DEVOPS_TOKEN") or os.getenv("AZURE_DEVOPS_PAT")
     
     if not all([organization, project, token]):
         missing = []
         if not organization:
-            missing.append("AZURE_DEVOPS_ORGANIZATION")
+            missing.append("AZURE_DEVOPS_ORGANIZATION or "
+                           "AZURE_DEVOPS_ORGANIZATION_URL")
         if not project:
             missing.append("AZURE_DEVOPS_PROJECT")
         if not token:
-            missing.append("AZURE_DEVOPS_TOKEN")
+            missing.append("AZURE_DEVOPS_TOKEN or AZURE_DEVOPS_PAT")
         missing_vars = ', '.join(missing)
         raise ValueError(f"Missing required environment variables: "
                          f"{missing_vars}")
