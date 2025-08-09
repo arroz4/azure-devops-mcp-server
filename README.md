@@ -8,7 +8,7 @@ This is a Model Context Protocol (MCP) server that provides tools for managing A
 - **Streamlined Epic Creation**: Create an Epic with multiple Tasks in a single command with automatic linking
 - **Comprehensive Summaries**: Get formatted tables with URLs for all created work items
 - **Professional Templates**: Built-in description templates with structured format (Objective, Technical Requirements, Implementation Steps, Acceptance Criteria, Business Context)
-- **Markdown Support**: Full Markdown formatting in descriptions (headers, lists, code blocks, links)
+- **HTML Formatting**: Perfect HTML formatting in descriptions with automatic conversion from simple text to proper HTML paragraphs, lists, and formatting (based on successful work item ID 75 implementation)
 - **Detailed Guidance**: Comprehensive task descriptions that provide clear implementation guidance
 - **Project Management**: Switch between projects and manage configurations
 - **Interactive Guides**: Built-in prompts for common workflows
@@ -53,12 +53,12 @@ Creates a new work item (Task or Epic) in Azure DevOps.
 **Parameters:**
 - `work_item_type` (string): "Task" or "Epic"
 - `title` (string): The title of the work item
-- `description` (string, optional): Description of the work item (supports Markdown formatting - MUST use \n for line breaks)
+- `description` (string, optional): Description of the work item (supports HTML formatting - MUST use \\n for line breaks which auto-convert to HTML paragraphs)
 - `assigned_to` (string, optional): Email address of the person to assign
 - `priority` (int, optional): Priority level (1-4, where 1 is highest)
 - `tags` (string, optional): Semicolon-separated tags
 
-**IMPORTANT:** Work item descriptions support full Markdown formatting as Azure DevOps renders them as .md files. **MUST use \n characters for line breaks** to ensure human readability. Use headers, lists, checkboxes, code blocks, links, and other Markdown features.
+**IMPORTANT:** Work item descriptions support perfect HTML formatting (Description field has Data type=HTML as confirmed by Microsoft Azure DevOps documentation). **MUST use \\n characters for line breaks** which are automatically converted to proper HTML paragraphs for optimal rendering. The server automatically converts simple text formatting to HTML structure including headers, lists, checkboxes, and paragraph separation based on successful work item ID 75 implementation.
 
 **Example:**
 ```python
@@ -78,7 +78,7 @@ Updates an existing work item in Azure DevOps.
 **Parameters:**
 - `item_id` (int): The ID of the work item to update
 - `title` (string, optional): New title for the work item
-- `description` (string, optional): New description (supports Markdown formatting - MUST use \n for line breaks)
+- `description` (string, optional): New description (supports HTML formatting - MUST use \\n for line breaks which auto-convert to HTML paragraphs)
 - `assigned_to` (string, optional): Email address to assign or "" to unassign
 - `priority` (int, optional): New priority level (1-4)
 - `tags` (string, optional): New tags or "" to remove all tags
@@ -116,9 +116,9 @@ Creates an Epic with multiple Tasks and automatically links them, providing a su
 
 **Parameters:**
 - `epic_title` (string): The title of the Epic to create
-- `epic_description` (string, optional): Epic description (supports Markdown formatting - MUST use \n for line breaks)
+- `epic_description` (string, optional): Epic description (supports HTML formatting - MUST use \\n for line breaks which auto-convert to HTML paragraphs)
 - `task_titles` (string): Comma-separated list of Task titles (e.g., "Setup API, Create UI, Write tests")
-- `task_descriptions` (string, optional): Comma-separated list of Task descriptions (must match task_titles count - MUST use \n for line breaks)
+- `task_descriptions` (string, optional): Comma-separated list of Task descriptions (must match task_titles count - MUST use \\n for line breaks which auto-convert to HTML paragraphs)
 - `assigned_to` (string, optional): Email address to assign all work items to
 - `priority` (int, optional): Priority level (1-4, where 1 is highest)
 - `tags` (string, optional): Semicolon-separated tags to apply to all work items

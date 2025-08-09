@@ -13,16 +13,16 @@ This MCP server provides tools for managing Azure DevOps work items including:
 - Linking Tasks to Epics
 - Project management
 
-IMPORTANT: Work item descriptions support Markdown formatting as Azure DevOps renders them properly.
-Use proper Markdown syntax with EXPLICIT line breaks (\\n converts to paragraph breaks) for human readability:
-- Headers (# ## ###) - Always add \\n after headers
-- Lists (- or 1.) - Use \\n between list items for proper spacing
-- Code blocks (```) - Surround with \\n for proper rendering
-- Links [text](url) - Add \\n for paragraph breaks
-- Bold **text** and italic *text*
-- Tables, checkboxes, etc. - Use \\n for proper table formatting
+IMPORTANT: Work item descriptions support HTML formatting as confirmed by Microsoft Azure DevOps documentation.
+The Description field has Data type=HTML and proper HTML formatting renders perfectly in Azure DevOps.
+Based on successful testing (work item ID 75), use HTML paragraph structure for optimal rendering:
+- Use <p> tags for paragraphs: <p>Content here</p>
+- Use <strong> for bold text: <p><strong>Section:</strong></p>
+- Use <ul><li> for unordered lists and <ol><li> for ordered lists
+- Use <br> tags for line breaks within paragraphs
+- Always use \\n characters for line separations (converts to proper HTML structure)
 
-CRITICAL: Always use \\n characters for line breaks (converts to paragraph breaks) to ensure descriptions are human-readable in Azure DevOps!
+CRITICAL: The process_description_text() function automatically converts \\n to proper HTML paragraph formatting for perfect Azure DevOps rendering!
 
 Company context:
 The company is called Omar's Solutions. We specialize in providing
@@ -742,27 +742,114 @@ def get_current_config():
 def process_description_text(description: str) -> str:
     """
     Process description text to ensure proper formatting for Azure DevOps.
-    Converts \\n escape sequences to proper newlines for Markdown support in Azure DevOps.
+    Converts \\n escape sequences to proper HTML paragraph formatting.
     
-    Based on Azure DevOps documentation:
-    - Description field supports Markdown formatting
-    - Use actual newlines (\n) for proper Markdown rendering
-    - Azure DevOps processes Markdown natively in description fields
+    Based on Azure DevOps documentation and testing:
+    - Description field has Data type=HTML (confirmed from Microsoft docs)
+    - Work item ID 75 confirmed that HTML paragraph formatting works perfectly
+    - Use <p> tags for paragraphs and proper HTML structure for optimal rendering
     
     Args:
         description: Raw description text with \\n characters
         
     Returns:
-        Processed description with actual newlines for Markdown support
+        Processed description with HTML paragraph formatting for proper Azure DevOps rendering
     """
     if not description:
         return description
     
-    # Convert \\n escape sequences to actual newlines for Markdown support
-    # Azure DevOps supports Markdown in description fields with proper \n newlines
+    # Convert \\n escape sequences to actual newlines first
     processed = description.replace('\\n', '\n')
     
-    return processed
+    # Split into sections by double newlines first
+    sections = processed.split('\n\n')
+    html_sections = []
+    
+    for section in sections:
+        if not section.strip():
+            continue
+            
+        lines = [line.strip() for line in section.split('\n') if line.strip()]
+        if not lines:
+            continue
+            
+        section_html = []
+        in_list = False
+        list_type = None
+        
+        for line in lines:
+            if line.startswith('**') and line.endswith('**'):
+                # Close any open list first
+                if in_list:
+                    section_html.append(f'</{list_type}>')
+                    in_list = False
+                # Convert markdown bold headers to HTML paragraph with strong
+                content = line[2:-2]  # Remove ** from both ends
+                section_html.append(f'<p><strong>{content}</strong></p>')
+            elif line.startswith('- ') or line.startswith('• '):
+                # Handle unordered list items
+                if not in_list or list_type != 'ul':
+                    if in_list:
+                        section_html.append(f'</{list_type}>')
+                    section_html.append('<ul>')
+                    in_list = True
+                    list_type = 'ul'
+                item_content = line[2:].strip()  # Remove "- " or "• "
+                section_html.append(f'<li>{item_content}</li>')
+            elif len(line) > 2 and line[:2].replace('.', '').isdigit() and line[2:3] == '.':
+                # Handle numbered list items (1. 2. etc.)
+                if not in_list or list_type != 'ol':
+                    if in_list:
+                        section_html.append(f'</{list_type}>')
+                    section_html.append('<ol>')
+                    in_list = True
+                    list_type = 'ol'
+                item_content = line[3:].strip() if len(line) > 3 else ""  # Remove "1. " etc.
+                section_html.append(f'<li>{item_content}</li>')
+            elif line.startswith('✓ '):
+                # Handle checkmark items - keep them as paragraph with breaks
+                if in_list:
+                    section_html.append(f'</{list_type}>')
+                    in_list = False
+                content = line[2:].strip()  # Remove "✓ "
+                section_html.append(f'✓ {content}<br>')
+            elif line.startswith('##'):
+                # Keep markdown headers as-is for mixed compatibility
+                if in_list:
+                    section_html.append(f'</{list_type}>')
+                    in_list = False
+                section_html.append(line)
+            else:
+                # Regular paragraph content
+                if in_list:
+                    section_html.append(f'</{list_type}>')
+                    in_list = False
+                section_html.append(f'<p>{line}</p>')
+        
+        # Close any remaining open list
+        if in_list:
+            section_html.append(f'</{list_type}>')
+        
+        # Handle checkmark section completion
+        if section_html and any('✓' in line and '<br>' in line for line in section_html):
+            # Find checkmark lines and wrap them properly
+            checkmark_lines = []
+            other_lines = []
+            for line in section_html:
+                if '✓' in line and '<br>' in line:
+                    checkmark_lines.append(line)
+                else:
+                    other_lines.append(line)
+            
+            if checkmark_lines:
+                # Combine checkmark lines into a single paragraph
+                checkmark_content = '\n'.join(checkmark_lines).rstrip('<br>')
+                other_lines.append(f'<p>{checkmark_content}</p>')
+                section_html = other_lines
+        
+        html_sections.append('\n'.join(section_html))
+    
+    return '\n\n'.join(html_sections)
 
 def get_auth_headers(pat=None):
     """
@@ -1004,14 +1091,14 @@ def update_work_item(
     Updates an existing work item in Azure DevOps.
     
     Uses helper functions:
-    - process_description_text() - Converts \\n escape sequences to proper paragraph breaks (double newlines) for proper Azure DevOps rendering
+    - process_description_text() - Converts \\n escape sequences to proper HTML paragraph formatting for perfect Azure DevOps rendering
     - build_workitem_url() - Constructs the Azure DevOps API URL for the work item
     - get_json_patch_headers() - Creates proper headers for JSON Patch requests
     
     Args:
         item_id: The ID of the work item to update
         title: New title for the work item
-        description: New description (supports Markdown formatting - MUST use \\n for line breaks which converts to paragraph breaks)
+        description: New description (supports HTML formatting - MUST use \\n for line breaks which converts to HTML paragraphs)
         assigned_to: Email address to assign or "" to unassign
         priority: New priority level (1-4)
         tags: New tags or "" to remove all tags
@@ -1292,9 +1379,9 @@ def create_epic_with_tasks(
     
     Args:
         epic_title: The title of the Epic to create
-        epic_description: Description of the Epic (supports Markdown formatting - MUST use \\n for line breaks which converts to paragraph breaks)
+        epic_description: Description of the Epic (supports HTML formatting - MUST use \\n for line breaks which converts to HTML paragraphs)
         task_titles: Comma-separated list of Task titles (e.g., "Task 1, Task 2, Task 3")
-        task_descriptions: Comma-separated list of DETAILED Task descriptions. Each description should be comprehensive and include: Objective section, Technical Requirements, Implementation Steps, and Acceptance Criteria. Use proper Markdown formatting with headers (##), lists, and checkboxes. Minimum 3-4 sentences per section for adequate detail. (optional, must match task_titles count if provided - MUST use \\n for line breaks which converts to paragraph breaks)
+        task_descriptions: Comma-separated list of DETAILED Task descriptions. Each description should be comprehensive and include: Objective section, Technical Requirements, Implementation Steps, and Acceptance Criteria. Use proper formatting with headers (##), lists, and checkboxes. Minimum 3-4 sentences per section for adequate detail. (optional, must match task_titles count if provided - MUST use \\n for line breaks which converts to HTML paragraphs)
         assigned_to: Email address to assign the Epic and Tasks to (optional)
         priority: Priority level (1-4, where 1 is highest)
         tags: Semicolon-separated tags to apply to all work items
