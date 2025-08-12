@@ -22,13 +22,13 @@ setup_logging(logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize MCP server
-mcp = FastMCP("Azure DevOps MCP Server")
+fastmcp_server = FastMCP("Azure DevOps MCP Server")
 
 # Initialize services
 work_item_service = WorkItemService()
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def create_work_item(
     work_item_type: str,
     title: str,
@@ -71,7 +71,7 @@ def create_work_item(
         return format_error_message("create_work_item", e)
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def create_epic_with_tasks(
     epic_title: str,
     epic_description: str = "",
@@ -126,7 +126,7 @@ def create_epic_with_tasks(
         return format_error_message("create_epic_with_tasks", e)
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def get_work_item(item_id: int) -> str:
     """
     Retrieves detailed information about a work item from Azure DevOps.
@@ -159,7 +159,7 @@ def get_work_item(item_id: int) -> str:
         return format_error_message("get_work_item", e)
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def update_work_item(
     item_id: int,
     title: str = None,
@@ -205,7 +205,7 @@ def update_work_item(
         return format_error_message("update_work_item", e)
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def delete_work_item(item_id: int) -> str:
     """
     Deletes a work item from Azure DevOps.
@@ -227,7 +227,7 @@ def delete_work_item(item_id: int) -> str:
         return format_error_message("delete_work_item", e)
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def link_task_to_epic(epic_id: int, task_id: int) -> str:
     """
     Establishes a parent-child hierarchical relationship between Epic/Task.
@@ -250,7 +250,7 @@ def link_task_to_epic(epic_id: int, task_id: int) -> str:
         return format_error_message("link_task_to_epic", e)
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def get_current_project() -> str:
     """
     Retrieves the currently configured Azure DevOps project name.
@@ -269,7 +269,7 @@ def get_current_project() -> str:
         return format_error_message("get_current_project", e)
 
 
-@mcp.tool()
+@fastmcp_server.tool()
 def set_project(new_project_name: str) -> str:
     """
     Updates the Azure DevOps project configuration.
@@ -288,7 +288,7 @@ def set_project(new_project_name: str) -> str:
 
 
 if __name__ == "__main__":
-    # Run the MCP server with streamable-http transport
+    # Run the MCP server with standard HTTP transport for MCP client compatibility
     logger.info("Starting Azure DevOps MCP Server...")
-    logger.info("Server will be available at: http://localhost:8001/mcp/")
-    mcp.run(transport="streamable-http", host="localhost", port=8001)
+    logger.info("Server will be available at: http://0.0.0.0:2500/mcp/")
+    fastmcp_server.run(transport="http", host="0.0.0.0", port=2500)

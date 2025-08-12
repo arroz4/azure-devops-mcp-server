@@ -292,7 +292,125 @@ MCP_SERVER_PORT=8000
 - 🔄 **Live Connection** - Real-time connection to your Azure DevOps project
 - 🎯 **Context Aware** - Tools adapt to your current project settings
 
-## 📋 Features
+## � Azure Container Apps Deployment
+
+This server can be deployed to Azure Container Apps for cloud hosting and remote access.
+
+### Prerequisites for Deployment
+
+1. **Azure Container Registry**
+   - Create an Azure Container Registry
+   - Enable admin credentials or use managed identity
+
+2. **Azure Container Apps Environment**
+   - Create a Container Apps environment
+   - Configure for external ingress
+
+### Deployment Steps
+
+#### 1. Build and Push Docker Image
+
+```bash
+# Build from project root (important: use project root as context)
+cd /path/to/ado_builder
+docker build --no-cache -f docker/Dockerfile -t ado-mcp-server .
+
+# Tag for your registry
+docker tag ado-mcp-server your-registry.azurecr.io/ado-mcp-server:latest
+
+# Push to Azure Container Registry
+docker push your-registry.azurecr.io/ado-mcp-server:latest
+```
+
+#### 2. Deploy to Azure Container Apps
+
+```bash
+# Create Container App
+az containerapp create \
+  --name ado-mcp-server \
+  --resource-group your-resource-group \
+  --environment your-container-env \
+  --image your-registry.azurecr.io/ado-mcp-server:latest \
+  --target-port 2500 \
+  --ingress external \
+  --env-vars \
+    AZURE_DEVOPS_ORGANIZATION=your-org \
+    AZURE_DEVOPS_PROJECT=your-project \
+    AZURE_DEVOPS_TOKEN=your-pat-token
+```
+
+#### 3. Update VS Code Configuration
+
+Update `.vscode/mcp.json` to point to your deployed server:
+
+```json
+{
+  "servers": {
+    "ado-mcp-server": {
+      "url": "https://your-app-name.region.azurecontainerapps.io/mcp/",
+      "type": "http"
+    }
+  },
+  "inputs": []
+}
+```
+
+### ⚠️ Important Deployment Notes
+
+#### Environment Variables
+- **Container Environment**: Use Azure Container Apps environment variables (not .env files)
+- **Security**: Store sensitive tokens as Container Apps secrets
+- **Configuration**: Environment variables override any bundled .env files
+
+#### URL Endpoints
+- **Trailing Slash Required**: URL must end with `/mcp/` (not `/mcp`)
+- **HTTPS**: Azure Container Apps provides automatic HTTPS
+- **Port**: Internal container port 2500, external via Azure ingress
+
+#### Docker Build Context
+- **Build Location**: Always build from project root directory
+- **Dockerfile Path**: Use `-f docker/Dockerfile` when building from root
+- **Dockerignore**: Ensure `.dockerignore` is in project root to exclude `.env` files
+
+#### Troubleshooting Common Issues
+
+1. **Environment Variables Not Loading**
+   ```bash
+   # Check Container Apps environment variables
+   az containerapp show --name your-app --resource-group your-rg --query properties.template.containers[0].env
+   
+   # Verify no .env file in container
+   az containerapp logs show --name your-app --resource-group your-rg --tail 20
+   ```
+
+2. **MCP Connection Failed**
+   - Verify URL ends with `/mcp/` (trailing slash)
+   - Check transport type is `"http"` (not `streamable-http`)
+   - Confirm external ingress is enabled
+
+3. **Docker Build Issues**
+   - Build from project root: `docker build -f docker/Dockerfile .`
+   - Check `.dockerignore` excludes `.env` files
+   - Use `--no-cache` for clean builds
+
+4. **Server Not Starting**
+   ```bash
+   # Check container logs
+   az containerapp logs show --name your-app --resource-group your-rg --follow
+   
+   # Verify environment variables are set
+   az containerapp revision show --name your-app --resource-group your-rg
+   ```
+
+### Production Considerations
+
+- **Scaling**: Configure min/max replicas based on usage
+- **Monitoring**: Enable Application Insights for monitoring
+- **Security**: Use Azure Key Vault for storing PAT tokens
+- **Networking**: Consider VNet integration for internal access
+- **Cost**: Monitor usage and configure appropriate resource limits
+
+## �📋 Features
 
 - ✅ **Full CRUD Operations** - Create, Read, Update, Delete work items
 - ✅ **Work Item Types** - Support for Tasks and Epics

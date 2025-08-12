@@ -22,11 +22,11 @@ RUN uv sync --frozen
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 8000
+EXPOSE 2500
 
-# Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
+ENV MCP_SERVER_PORT=2500
 
-# Run the MCP server
-CMD ["python", "mcp_server.py"]
+# Run the MCP server with uv
+CMD ["uv", "run", "python", "mcp_server.py"]

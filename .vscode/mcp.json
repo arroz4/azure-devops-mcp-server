@@ -1,7 +1,7 @@
 {
 	"servers": {
-		"ADO-server": {
-			"url": "http://localhost:8001/mcp/",
+		"ado-mcp-server": {
+			"url": "https://ado-mcp-server.jollypebble-869438fa.westus2.azurecontainerapps.io/mcp/",
 			"type": "http"
 		}
 	},
